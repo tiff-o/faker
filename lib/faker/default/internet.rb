@@ -183,20 +183,38 @@ module Faker
           temp += Lorem.characters(number: diff_rand)
         end
 
+        max_special_chars = temp.length - temp.scan(/[[:digit:]]/).length - min_alpha
+        max_special_chars = temp.length if max_special_chars.zero?
+
         if mix_case
-          alpha_count = 0
+          alpha_chars = []
+          alpha_chars_index = []
+
           temp.chars.each_with_index do |char, index|
-            if char =~ /[[:alpha:]]/
-              temp[index] = char.upcase if alpha_count.even?
-              alpha_count += 1
-            end
+            next unless char =~ /[[:alpha:]]/
+
+            alpha_chars << char
+            alpha_chars_index << index
+            temp[index] = char
           end
         end
 
         if special_characters
           chars = %w[! @ # $ % ^ & *]
-          rand(1..min_length).times do |i|
-            temp[i] = chars[rand(chars.length)]
+
+          rand(1..max_special_chars).times do |i|
+            temp[i] = chars[rand(chars.length)] unless alpha_chars.count <= min_alpha && alpha_chars.count.positive?
+          end
+        end
+
+        if min_alpha.positive?
+          alpha_count = 0
+
+          alpha_chars_index.each do |index|
+            if temp[index] =~ /[[:alpha:]]/ && alpha_count.even?
+              temp[index] = temp[index].upcase
+              alpha_count += 1
+            end
           end
         end
 
